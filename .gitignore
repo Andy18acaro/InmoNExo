@@ -12,6 +12,7 @@ build/
 Thumbs.db
 *.log
 inmonexo.db
+!backend/inmonexo.db
 
 .scratch/**/comments.md
 .env
