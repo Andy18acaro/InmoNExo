@@ -1,0 +1,23 @@
+from enum import StrEnum
+
+
+class ProjectStatus(StrEnum):
+    PRE_SALE = "PRE_SALE"
+    UNDER_CONSTRUCTION = "UNDER_CONSTRUCTION"
+    READY_TO_MOVE = "READY_TO_MOVE"
+    DELIVERED = "DELIVERED"
+    UNKNOWN = "UNKNOWN"
+
+
+class Currency(StrEnum):
+    PEN = "PEN"
+    USD = "USD"
+
+
+class MarketEventType(StrEnum):
+    NEW_PROJECT = "NEW_PROJECT"
+    PRICE_CHANGE = "PRICE_CHANGE"
+    PROJECT_STATUS_CHANGE = "PROJECT_STATUS_CHANGE"
+    PROJECT_REMOVED = "PROJECT_REMOVED"
+    NEW_UNIT_TYPE = "NEW_UNIT_TYPE"
+    PRICE_REMOVED = "PRICE_REMOVED"

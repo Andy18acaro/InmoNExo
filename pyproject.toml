@@ -1,0 +1,50 @@
+[project]
+name = "inmonexo"
+version = "0.1.0"
+description = "Real estate market intelligence — Lima developers"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "alembic>=1.14",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "psycopg[binary]>=3.2",
+    "beautifulsoup4>=4.12",
+    "httpx>=0.27",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "packages/core/inmonexo_core",
+    "packages/database/inmonexo_db",
+    "packages/scrapers/inmonexo_scrapers",
+    "packages/analytics/inmonexo_analytics",
+    "packages/api/inmonexo_api",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+    "packages/core",
+    "packages/database",
+    "packages/scrapers",
+    "packages/analytics",
+    "packages/api",
+    "apps/api",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
