@@ -1,5 +1,8 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from inmonexo_db.config import Settings
 from inmonexo_db.models import Base
@@ -7,7 +10,10 @@ from inmonexo_db.models import Base
 
 def get_engine(settings: Settings | None = None):
     settings = settings or Settings()
-    return create_engine(settings.sqlalchemy_url, future=True)
+    kwargs: dict = {"future": True}
+    if os.getenv("VERCEL") or os.getenv("SERVERLESS"):
+        kwargs["poolclass"] = NullPool
+    return create_engine(settings.sqlalchemy_url, **kwargs)
 
 
 def init_db(settings: Settings | None = None) -> None:

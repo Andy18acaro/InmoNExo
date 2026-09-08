@@ -42,6 +42,45 @@ cd packages/database
 python -m alembic -c alembic.ini upgrade head
 ```
 
+## Deploy (Vercel + Neon — gratis)
+
+Stack sin costo inicial: **Vercel Hobby** (web + API) y **Neon** (Postgres free tier).
+
+### 1. Base de datos (Neon)
+
+1. Crea cuenta en [neon.tech](https://neon.tech) (plan Free).
+2. Crea un proyecto y copia la connection string (`postgresql://...`).
+3. En el dashboard de Vercel → **Settings → Environment Variables**, añade:
+   - `DATABASE_URL` = tu connection string de Neon
+   - `FASTAPI_ROOT_PATH` = `/svc`
+
+### 2. Seed (una vez)
+
+Con la `DATABASE_URL` de Neon en tu terminal local:
+
+```powershell
+cd E:\DEV\projects\InmoNExo
+$env:DATABASE_URL="postgresql://USER:PASS@HOST/neondb?sslmode=require"
+python infrastructure/scripts/seed_demo.py
+```
+
+### 3. Vercel
+
+1. Importa el repo [Andy18acaro/InmoNExo](https://github.com/Andy18acaro/InmoNExo) en [vercel.com/new](https://vercel.com/new).
+2. Vercel detecta `vercel.json` con dos servicios: **Next.js** (`apps/web`) y **FastAPI** (`backend/main.py`).
+3. Deploy. URLs:
+   - Dashboard: `https://tu-proyecto.vercel.app`
+   - API / OpenAPI: `https://tu-proyecto.vercel.app/svc/docs`
+
+CLI (opcional):
+
+```powershell
+npx vercel login
+npx vercel --prod
+```
+
+La web usa el binding interno `INMONEXO_API_URL`; el navegador ve la API en `/svc`.
+
 ## Layout
 
 - `apps/api` — ASGI entrypoint

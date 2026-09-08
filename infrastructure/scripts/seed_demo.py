@@ -11,11 +11,12 @@ from inmonexo_scrapers.registry import PROVIDERS
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_ROOT = ROOT / "tests" / "fixtures"
-DB_PATH = ROOT / "inmonexo.db"
+DEFAULT_DB_PATH = ROOT / "inmonexo.db"
 
 
 def main() -> None:
-    os.environ["DATABASE_URL"] = f"sqlite:///{DB_PATH}"
+    if not os.getenv("DATABASE_URL"):
+        os.environ["DATABASE_URL"] = f"sqlite:///{DEFAULT_DB_PATH}"
     init_db()
     session_factory = get_session_factory()
 
@@ -26,7 +27,8 @@ def main() -> None:
     with session_factory() as session:
         runs = run_all_provider_scrapes(session, list(PROVIDERS.values()), fetcher_for)
         total = sum(run.projects_seen for run in runs)
-        print(f"Seeded {DB_PATH} — {len(runs)} providers, {total} projects")
+        db_target = os.environ["DATABASE_URL"]
+        print(f"Seeded {db_target} — {len(runs)} providers, {total} projects")
 
 
 if __name__ == "__main__":

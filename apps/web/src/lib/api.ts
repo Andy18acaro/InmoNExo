@@ -2,8 +2,18 @@ import type { DashboardData, DistrictStats, Overview, Project } from "./types";
 
 const DEFAULT_API = "http://127.0.0.1:8100";
 
+/** Server-side fetch target (Vercel binding or explicit URL). */
 export function apiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API;
+  return (
+    process.env.INMONEXO_API_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    DEFAULT_API
+  );
+}
+
+/** Browser-visible API base (OpenAPI link, etc.). */
+export function publicApiBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_API_URL ?? apiBaseUrl();
 }
 
 async function fetchJson<T>(path: string): Promise<T> {

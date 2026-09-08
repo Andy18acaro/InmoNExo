@@ -6,7 +6,7 @@ import { DistrictTable } from "@/components/DistrictTable";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { ProjectExplorer } from "@/components/ProjectExplorer";
 import { StatusBreakdown } from "@/components/StatusBreakdown";
-import { apiBaseUrl, fetchDashboardData } from "@/lib/api";
+import { apiBaseUrl, fetchDashboardData, publicApiBaseUrl } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "InmoNExo — Market Intelligence Lima",
@@ -34,7 +34,7 @@ export default async function HomePage() {
             <p className="text-sm text-ink-muted">Inteligencia de mercado — 5 developers Lima</p>
           </div>
           <a
-            href={`${apiBaseUrl()}/docs`}
+            href={`${publicApiBaseUrl()}/docs`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-mint hover:underline"
