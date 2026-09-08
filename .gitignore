@@ -16,3 +16,4 @@ inmonexo.db
 .scratch/**/comments.md
 .env
 
+.vercel

@@ -15,7 +15,7 @@
     },
     "api": {
       "root": ".",
-      "entrypoint": "backend/main:app"
+      "entrypoint": "backend.main:app"
     }
   },
   "rewrites": [

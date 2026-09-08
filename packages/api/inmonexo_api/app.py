@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from inmonexo_api.routers import analytics, companies, events, projects
 
@@ -17,20 +19,14 @@ DEFAULT_CORS_ORIGINS = [
 ]
 
 
-class StripSvcPrefixMiddleware:
+class StripSvcPrefixMiddleware(BaseHTTPMiddleware):
     """Strip /svc from public Vercel rewrites; internal bindings keep bare paths."""
 
-    def __init__(self, app: ASGIApp, prefix: str) -> None:
-        self.app = app
-        self.prefix = prefix.rstrip("/") or prefix
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] == "http":
-            path = scope["path"]
-            if path == self.prefix or path.startswith(f"{self.prefix}/"):
-                scope = dict(scope)
-                scope["path"] = path[len(self.prefix) :] or "/"
-        await self.app(scope, receive, send)
+    async def dispatch(self, request: Request, call_next) -> Response:
+        path = request.scope["path"]
+        if path == "/svc" or path.startswith("/svc/"):
+            request.scope["path"] = path[4:] or "/"
+        return await call_next(request)
 
 
 def cors_origins() -> list[str]:
@@ -42,7 +38,7 @@ def cors_origins() -> list[str]:
 
 
 def create_app() -> FastAPI:
-    root_path = os.getenv("FASTAPI_ROOT_PATH", "")
+    root_path = os.getenv("FASTAPI_ROOT_PATH", "/svc" if os.getenv("VERCEL") else "")
     app = FastAPI(
         title="InmoNExo API",
         description="Read API for Lima real estate market intelligence",
@@ -68,8 +64,8 @@ def create_app() -> FastAPI:
     if STATIC_DIR.is_dir():
         app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-    if root_path:
-        app = StripSvcPrefixMiddleware(app, root_path)
+    if os.getenv("VERCEL"):
+        app.add_middleware(StripSvcPrefixMiddleware)
 
     return app
 

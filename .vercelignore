@@ -1,7 +1,6 @@
 tests/
 .scratch/
 **/__pycache__/
-**/*.db
 .env
 .env.local
 apps/web/node_modules/
