@@ -18,3 +18,5 @@
 - Production today uses static `backend/inmonexo.db`; live scrape needs Postgres (Neon) for persistence
 
 ## Comments
+
+- 2026-09-08: GitHub issue [#3](https://github.com/Andy18acaro/InmoNExo/issues/3)

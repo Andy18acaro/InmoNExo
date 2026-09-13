@@ -70,20 +70,22 @@ python infrastructure/scripts/run_api.py
 
 Documented in `.scratch/post-mvp/spec.md`.
 
-Ticket stubs (not started):
+Ticket status:
 
-| # | File | Feature |
-|---|------|---------|
-| 01 | `issues/01-market-events-feed.md` | Feed de MarketEvents en dashboard |
-| 02 | `issues/02-price-history-chart.md` | Histórico de precios por proyecto |
-| 03 | `issues/03-live-scrape-apify.md` | Scrape live con Apify |
-| 04 | `issues/04-district-developer-compare.md` | Comparador developers / distritos |
-| 05 | `issues/05-export-csv.md` | Export CSV/Excel |
-| 06 | `issues/06-district-heatmap.md` | Mapa de calor por distrito |
-| 07 | `issues/07-unit-types-explorer.md` | UnitTypes en explorer |
-| 08 | `issues/08-market-activity-score.md` | Score de movimiento de mercado |
-| 09 | `issues/09-more-providers.md` | Más developers + onboarding Provider |
-| 10 | `issues/10-auth-workspaces.md` | Auth + workspaces B2B |
+| # | File | Feature | Status | GitHub |
+|---|------|---------|--------|--------|
+| 01 | `issues/01-market-events-feed.md` | Feed de MarketEvents en dashboard | **done** (2026-09-13) | [#1](https://github.com/Andy18acaro/InmoNExo/issues/1) |
+| 02 | `issues/02-price-history-chart.md` | Histórico de precios por proyecto | **done** (2026-09-13) | [#2](https://github.com/Andy18acaro/InmoNExo/issues/2) |
+| 03 | `issues/03-live-scrape-apify.md` | Scrape live con Apify | open | [#3](https://github.com/Andy18acaro/InmoNExo/issues/3) |
+| 04 | `issues/04-district-developer-compare.md` | Comparador developers / distritos | open | [#4](https://github.com/Andy18acaro/InmoNExo/issues/4) |
+| 05 | `issues/05-export-csv.md` | Export CSV/Excel | open | [#5](https://github.com/Andy18acaro/InmoNExo/issues/5) |
+| 06 | `issues/06-district-heatmap.md` | Mapa de calor por distrito | open | [#6](https://github.com/Andy18acaro/InmoNExo/issues/6) |
+| 07 | `issues/07-unit-types-explorer.md` | UnitTypes en explorer | open | [#7](https://github.com/Andy18acaro/InmoNExo/issues/7) |
+| 08 | `issues/08-market-activity-score.md` | Score de movimiento de mercado | open | [#8](https://github.com/Andy18acaro/InmoNExo/issues/8) |
+| 09 | `issues/09-more-providers.md` | Más developers + onboarding Provider | open | [#9](https://github.com/Andy18acaro/InmoNExo/issues/9) |
+| 10 | `issues/10-auth-workspaces.md` | Auth + workspaces B2B | open | [#10](https://github.com/Andy18acaro/InmoNExo/issues/10) |
+| 11 | `issues/11-district-price-index.md` | Índice InmoNExo por distrito | open (blocked by 02 ✅) | — |
+| 12 | `issues/12-inventory-absorption.md` | Inventario y absorción por tipología | open (blocked by 03) | — |
 
 ---
 
@@ -96,3 +98,5 @@ Maps (except simple heatmap exploration), auth/payments in MVP sense, nationwide
 ## Comments
 
 - 2026-09-08: Handoff created after Vercel deploy + feature roadmap discussion.
+- 2026-09-13: Tickets **01 y 02 implementados**: `GET /events` enriquecido (project/company/district/source_url) + filtro `district`; `GET /projects/{id}/price-history` nuevo; dashboard con `EventsFeed` (filtros por tipo/distrito) e histórico de precios con SVG chart en fila expandible del explorer. 56 tests passing, `npm run build` OK.
+- 2026-09-13: Research competitivo Urbania + referentes US en `docs/research/urbania-competitive-analysis.md` → nuevos tickets **11** (índice por distrito, desbloqueado) y **12** (inventario/absorción, requiere 03). Siguiente feature recomendada: **11** o **03**.

@@ -4,6 +4,12 @@ Real estate **market intelligence** for Lima: scrape public Developer sites → 
 
 Not a marketplace.
 
+## Features
+
+- Dashboard con métricas, distritos y explorer de proyectos filtrable/ordenable.
+- **Feed de eventos de mercado** (proyectos nuevos, cambios de precio/estado) con filtros por tipo y distrito — `GET /events?event_type=&district=`.
+- **Histórico de precios por proyecto** (gráfico + tabla desde snapshots append-only) en la fila expandible del explorer — `GET /projects/{id}/price-history`.
+
 ## Correr (demo local)
 
 Terminal 1 — API + datos de demo:

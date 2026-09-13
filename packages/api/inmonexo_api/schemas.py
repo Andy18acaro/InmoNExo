@@ -47,6 +47,22 @@ class MarketEventOut(BaseModel):
     previous_value: dict | None = None
     new_value: dict | None = None
     detected_at: datetime
+    project_name: str | None = None
+    company_name: str | None = None
+    district: str | None = None
+    source_url: str | None = None
+
+
+class PriceSnapshotOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    project_id: UUID | None = None
+    unit_id: UUID | None = None
+    price: int
+    currency: str
+    recorded_at: datetime
+    source_url: str | None = None
 
 
 class OverviewOut(BaseModel):

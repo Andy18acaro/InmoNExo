@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 
-import type { Project } from "@/lib/types";
+import { PriceChart } from "@/components/PriceChart";
+import { fetchProjectPriceHistory } from "@/lib/api";
+import type { PriceSnapshot, Project } from "@/lib/types";
 
 type SortKey = "project_name" | "company_name" | "district" | "project_status" | "price_min" | "last_seen_at";
 type SortDir = "asc" | "desc";
@@ -19,6 +21,11 @@ function money(project: Project): string {
   if (project.price_min == null) return "—";
   const sym = project.currency === "PEN" || project.currency == null ? "S/" : project.currency;
   return `${sym} ${project.price_min.toLocaleString("es-PE")}`;
+}
+
+function snapshotPrice(s: PriceSnapshot): string {
+  const sym = s.currency === "PEN" ? "S/" : s.currency;
+  return `${sym} ${s.price.toLocaleString("es-PE")}`;
 }
 
 function compare(a: Project, b: Project, key: SortKey, dir: SortDir): number {
@@ -38,6 +45,9 @@ export function ProjectExplorer({ projects }: { projects: Project[] }) {
   const [status, setStatus] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("project_name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [histories, setHistories] = useState<Record<string, PriceSnapshot[]>>({});
+  const [historyState, setHistoryState] = useState<Record<string, "loading" | "error" | undefined>>({});
 
   const districts = useMemo(
     () => [...new Set(projects.map((p) => p.district).filter(Boolean))].sort() as string[],
@@ -61,6 +71,24 @@ export function ProjectExplorer({ projects }: { projects: Project[] }) {
       })
       .sort((a, b) => compare(a, b, sortKey, sortDir));
   }, [projects, query, district, status, sortKey, sortDir]);
+
+  async function toggleExpand(projectId: string) {
+    if (expandedId === projectId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(projectId);
+    if (histories[projectId] !== undefined || historyState[projectId] === "loading") return;
+
+    setHistoryState((s) => ({ ...s, [projectId]: "loading" }));
+    try {
+      const series = await fetchProjectPriceHistory(projectId);
+      setHistories((h) => ({ ...h, [projectId]: series }));
+      setHistoryState((s) => ({ ...s, [projectId]: undefined }));
+    } catch {
+      setHistoryState((s) => ({ ...s, [projectId]: "error" }));
+    }
+  }
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -119,6 +147,7 @@ export function ProjectExplorer({ projects }: { projects: Project[] }) {
         <table className="min-w-full text-sm">
           <thead className="bg-[#121a24] text-left text-ink-muted">
             <tr>
+              <th className="w-10 px-2 py-3" aria-label="Expandir histórico" />
               {(
                 [
                   ["project_name", "Proyecto"],
@@ -145,35 +174,119 @@ export function ProjectExplorer({ projects }: { projects: Project[] }) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-ink-muted">
+                <td colSpan={7} className="px-4 py-6 text-center text-ink-muted">
                   Sin resultados
                 </td>
               </tr>
             ) : (
               filtered.map((p) => (
-                <tr key={p.id} className="border-t border-ink-border hover:bg-[#1f2a3a]">
-                  <td className="px-4 py-2.5">
-                    <a
-                      href={p.project_url ?? p.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-mint hover:underline"
-                    >
-                      {p.project_name}
-                    </a>
-                  </td>
-                  <td className="px-4 py-2.5">{p.company_name}</td>
-                  <td className="px-4 py-2.5">{p.district ?? "—"}</td>
-                  <td className="px-4 py-2.5">
-                    <span className="rounded-full bg-[#243044] px-2 py-0.5 text-xs text-mint">
-                      {STATUS_LABELS[p.project_status] ?? p.project_status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 tabular-nums">{money(p)}</td>
-                  <td className="px-4 py-2.5 tabular-nums text-ink-muted">
-                    {new Date(p.last_seen_at).toLocaleDateString("es-PE")}
-                  </td>
-                </tr>
+                <Fragment key={p.id}>
+                  <tr className="border-t border-ink-border hover:bg-[#1f2a3a]">
+                    <td className="px-2 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(p.id)}
+                        aria-expanded={expandedId === p.id}
+                        aria-label={`Histórico de precios de ${p.project_name}`}
+                        className="rounded px-1.5 py-0.5 text-ink-muted hover:bg-[#243044] hover:text-mint"
+                      >
+                        {expandedId === p.id ? "▾" : "▸"}
+                      </button>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <a
+                        href={p.project_url ?? p.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-mint hover:underline"
+                      >
+                        {p.project_name}
+                      </a>
+                    </td>
+                    <td className="px-4 py-2.5">{p.company_name}</td>
+                    <td className="px-4 py-2.5">{p.district ?? "—"}</td>
+                    <td className="px-4 py-2.5">
+                      <span className="rounded-full bg-[#243044] px-2 py-0.5 text-xs text-mint">
+                        {STATUS_LABELS[p.project_status] ?? p.project_status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 tabular-nums">{money(p)}</td>
+                    <td className="px-4 py-2.5 tabular-nums text-ink-muted">
+                      {new Date(p.last_seen_at).toLocaleDateString("es-PE")}
+                    </td>
+                  </tr>
+                  {expandedId === p.id && (
+                    <tr className="border-t border-ink-border bg-[#161f2b]">
+                      <td colSpan={7} className="px-4 py-4">
+                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                          Histórico de precios · {p.project_name}
+                        </h3>
+                        {historyState[p.id] === "loading" && (
+                          <p className="text-sm text-ink-muted">Cargando histórico…</p>
+                        )}
+                        {historyState[p.id] === "error" && (
+                          <p className="text-sm text-red-300">
+                            No se pudo cargar el histórico de precios.
+                          </p>
+                        )}
+                        {histories[p.id] !== undefined && historyState[p.id] === undefined && (
+                          histories[p.id].length === 0 ? (
+                            <p className="text-sm text-ink-muted">
+                              Sin snapshots de precio para este proyecto todavía.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {histories[p.id].length > 1 && (
+                                <PriceChart snapshots={histories[p.id]} />
+                              )}
+                              <div className="overflow-x-auto rounded-lg border border-ink-border">
+                                <table className="min-w-full text-sm">
+                                  <thead className="bg-[#121a24] text-left text-ink-muted">
+                                    <tr>
+                                      <th className="px-4 py-2 font-medium">Fecha</th>
+                                      <th className="px-4 py-2 font-medium">Precio</th>
+                                      <th className="px-4 py-2 font-medium">Fuente</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {[...histories[p.id]].reverse().map((s) => (
+                                      <tr key={s.id} className="border-t border-ink-border">
+                                        <td className="px-4 py-2 tabular-nums text-ink-muted">
+                                          {new Date(s.recorded_at).toLocaleDateString("es-PE", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                          })}
+                                        </td>
+                                        <td className="px-4 py-2 tabular-nums">
+                                          {snapshotPrice(s)}
+                                        </td>
+                                        <td className="px-4 py-2">
+                                          {s.source_url ? (
+                                            <a
+                                              href={s.source_url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-mint hover:underline"
+                                            >
+                                              Ver fuente
+                                            </a>
+                                          ) : (
+                                            "—"
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))
             )}
           </tbody>

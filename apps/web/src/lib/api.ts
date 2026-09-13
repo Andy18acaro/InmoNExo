@@ -1,4 +1,11 @@
-import type { DashboardData, DistrictStats, Overview, Project } from "./types";
+import type {
+  DashboardData,
+  DistrictStats,
+  MarketEvent,
+  Overview,
+  PriceSnapshot,
+  Project,
+} from "./types";
 
 const DEFAULT_API = "http://127.0.0.1:8100";
 
@@ -36,11 +43,20 @@ export async function fetchProjects(): Promise<Project[]> {
   return fetchJson<Project[]>("/projects");
 }
 
+export async function fetchEvents(limit = 200): Promise<MarketEvent[]> {
+  return fetchJson<MarketEvent[]>(`/events?limit=${limit}`);
+}
+
+export async function fetchProjectPriceHistory(projectId: string): Promise<PriceSnapshot[]> {
+  return fetchJson<PriceSnapshot[]>(`/projects/${projectId}/price-history`);
+}
+
 export async function fetchDashboardData(): Promise<DashboardData> {
-  const [overview, districts, projects] = await Promise.all([
+  const [overview, districts, projects, events] = await Promise.all([
     fetchOverview(),
     fetchDistricts(),
     fetchProjects(),
+    fetchEvents(),
   ]);
-  return { overview, districts, projects };
+  return { overview, districts, projects, events };
 }

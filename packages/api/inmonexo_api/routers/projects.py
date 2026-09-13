@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from inmonexo_api.deps import get_db
-from inmonexo_api.read_service import get_project, list_projects
-from inmonexo_api.schemas import ProjectOut
+from inmonexo_api.read_service import get_project, list_price_history, list_projects
+from inmonexo_api.schemas import PriceSnapshotOut, ProjectOut
 from inmonexo_db.models import Project
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -49,3 +49,14 @@ def get_project_by_id(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return project_to_schema(project)
+
+
+@router.get("/{project_id}/price-history", response_model=list[PriceSnapshotOut])
+def get_project_price_history(
+    project_id: uuid.UUID,
+    session: Session = Depends(get_db),
+) -> list[PriceSnapshotOut]:
+    project = get_project(session, project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return list_price_history(session, project_id)

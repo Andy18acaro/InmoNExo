@@ -1,10 +1,12 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from inmonexo_core.district import normalize_district
-from inmonexo_db.models import Company, MarketEvent, Project
+from inmonexo_db.models import Company, MarketEvent, PriceSnapshot, Project
+
+from inmonexo_api.schemas import MarketEventOut
 
 
 def list_companies(session: Session) -> list[tuple[Company, int]]:
@@ -40,9 +42,58 @@ def list_events(
     session: Session,
     *,
     event_type: str | None = None,
+    district: str | None = None,
     limit: int = 100,
-) -> list[MarketEvent]:
-    query = select(MarketEvent).order_by(MarketEvent.detected_at.desc()).limit(limit)
+) -> list[MarketEventOut]:
+    query = (
+        select(MarketEvent, Project, Company)
+        .outerjoin(
+            Project,
+            and_(
+                MarketEvent.entity_type == "project",
+                MarketEvent.entity_id == Project.id,
+            ),
+        )
+        .outerjoin(Company, Project.company_id == Company.id)
+        .order_by(MarketEvent.detected_at.desc())
+        .limit(limit)
+    )
     if event_type:
         query = query.where(MarketEvent.event_type == event_type)
-    return list(session.scalars(query).all())
+    if district:
+        canonical = normalize_district(district)
+        if canonical is None:
+            return []
+        query = query.where(Project.district == canonical)
+
+    events: list[MarketEventOut] = []
+    for event, project, company in session.execute(query).all():
+        events.append(
+            MarketEventOut(
+                id=event.id,
+                event_type=event.event_type,
+                entity_type=event.entity_type,
+                entity_id=event.entity_id,
+                previous_value=event.previous_value,
+                new_value=event.new_value,
+                detected_at=event.detected_at,
+                project_name=project.project_name if project is not None else None,
+                company_name=company.company_name if company is not None else None,
+                district=project.district if project is not None else None,
+                source_url=project.source_url if project is not None else None,
+            )
+        )
+    return events
+
+
+def list_price_history(
+    session: Session,
+    project_id: uuid.UUID,
+) -> list[PriceSnapshot]:
+    return list(
+        session.scalars(
+            select(PriceSnapshot)
+            .where(PriceSnapshot.project_id == project_id)
+            .order_by(PriceSnapshot.recorded_at.asc(), PriceSnapshot.id.asc())
+        ).all()
+    )

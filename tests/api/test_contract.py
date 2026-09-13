@@ -1,10 +1,13 @@
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
 
 from inmonexo_api.app import create_app
 from inmonexo_api.deps import get_db
+from inmonexo_db.models import PriceSnapshot
 from inmonexo_db.session import get_session_factory
 from inmonexo_scrapers.fetch import StaticFetcher
 from inmonexo_scrapers.pipeline import run_all_provider_scrapes
@@ -80,6 +83,70 @@ def test_get_events(api_client: TestClient) -> None:
     events = response.json()
     assert events
     assert events[0]["event_type"] == "NEW_PROJECT"
+
+
+def test_get_events_enriched(api_client: TestClient) -> None:
+    events = api_client.get("/events").json()
+    first = events[0]
+    assert first["entity_type"] == "project"
+    assert first["project_name"]
+    assert first["company_name"]
+    assert first["district"]
+    assert first["source_url"].startswith("http")
+
+
+def test_get_events_district_filter(api_client: TestClient) -> None:
+    surquillo = api_client.get("/events", params={"district": "surquillo"})
+    assert surquillo.status_code == 200
+    rows = surquillo.json()
+    assert rows
+    assert all(row["district"] == "Surquillo" for row in rows)
+
+    unknown = api_client.get("/events", params={"district": "distrito-inexistente"})
+    assert unknown.status_code == 200
+    assert unknown.json() == []
+
+
+def test_get_events_event_type_filter(api_client: TestClient) -> None:
+    rows = api_client.get("/events", params={"event_type": "NEW_PROJECT"}).json()
+    assert rows
+    assert all(row["event_type"] == "NEW_PROJECT" for row in rows)
+
+
+def test_get_project_price_history(api_client: TestClient) -> None:
+    projects = api_client.get("/projects").json()
+    project_id = projects[0]["id"]
+    response = api_client.get(f"/projects/{project_id}/price-history")
+    assert response.status_code == 200
+    series = response.json()
+    assert series
+    assert series[0]["recorded_at"] <= series[-1]["recorded_at"]
+    assert all(row["price"] > 0 and row["currency"] for row in series)
+
+
+def test_get_project_price_history_two_snapshots(api_client: TestClient, populated_db) -> None:
+    projects = api_client.get("/projects").json()
+    project = projects[0]
+    populated_db.add(
+        PriceSnapshot(
+            project_id=UUID(project["id"]),
+            price=111111,
+            currency="PEN",
+            recorded_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            source_url=project["source_url"],
+        )
+    )
+    populated_db.commit()
+
+    series = api_client.get(f"/projects/{project['id']}/price-history").json()
+    assert len(series) >= 2
+    assert series[0]["price"] == 111111
+    assert series[0]["recorded_at"] <= series[-1]["recorded_at"]
+
+
+def test_get_project_price_history_not_found(api_client: TestClient) -> None:
+    response = api_client.get("/projects/00000000-0000-0000-0000-000000000000/price-history")
+    assert response.status_code == 404
 
 
 def test_analytics_overview(api_client: TestClient) -> None:

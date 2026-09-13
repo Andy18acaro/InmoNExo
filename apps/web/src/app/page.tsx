@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import type { Metadata } from "next";
 
 import { DistrictTable } from "@/components/DistrictTable";
+import { EventsFeed } from "@/components/EventsFeed";
 import { MetricsGrid } from "@/components/MetricsGrid";
 import { ProjectExplorer } from "@/components/ProjectExplorer";
 import { StatusBreakdown } from "@/components/StatusBreakdown";
@@ -63,6 +64,7 @@ export default async function HomePage() {
                 <StatusBreakdown projects={data.projects} />
               </div>
               <ProjectExplorer projects={data.projects} />
+              <EventsFeed events={data.events} />
             </>
           )
         )}
